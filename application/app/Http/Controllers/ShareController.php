@@ -3,54 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ShareRequest;
+use App\Managers\ShareManager;
 use App\Models\Contact;
 use App\Models\Share;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ShareController extends Controller
 {
+    public function __construct(private ShareManager $shareManager)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      *
 //     * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        if(!auth()->user()) {
-            return redirect()->route('login');
-        }
-        $createdContactsIds = Contact::query()
-            ->where('creator_id', '=', auth()->user()->id)
-            ->select('id')
-            ->get();
-
-        $shares = Share::query()
-            ->whereIn('contact_id', $createdContactsIds)
-            ->get();
-
-        $sharedContacts = collect([]);
-        $contacts = auth()->user()->contacts()->get();
-
-        foreach($contacts as $_ => $contact) {
-
-            if($contact->receivers()->count()) {
-
-//                $users = $contact->users();
-                foreach( $contact->receivers()->get() as $user) {
-//                    dd([$user->name, $contact->name]);
-                }
-                    $sharedContacts->push($contact);
-//                dd($sharedContacts);
-
-            }
-        }
-
-        $sharedContacts = $sharedContacts->sortBy('name');
+        $orderRule = $request->orderRule ?? 'byContactName';
+        $sharedData = $this->shareManager->getSharedData(auth()->user()->id, $orderRule);
 
         return view('shares.index', [
-            'contacts'=>$sharedContacts,
-            'shares'=>$shares,
+            'sharedData'=>$sharedData,
+            'orderRule' => $orderRule,
         ]);
     }
 
@@ -61,15 +39,12 @@ class ShareController extends Controller
      */
     public function create(Contact $contact)
     {
-        $existedReceiversIds = ($contact->receivers()->get())
-            ->map
-            ->only(['id']);
+        $contactById = $this->shareManager->getContactById($contact->id);
+        if (auth()->user()->id != $contactById->creator->id) {
+            return redirect()->back();
+        }
 
-        $users = User::query()
-            ->where('id', '!=', auth()->user()->id)
-            ->whereNotIn('id', $existedReceiversIds)
-            ->orderBy('name')
-            ->get();
+        $users = $this->shareManager->getUsersWithoutContact($contact);
 
         return view('shares.create', [
             'creator_id'=>auth()->user()->id,
@@ -86,11 +61,13 @@ class ShareController extends Controller
      */
     public function store(ShareRequest $request)
     {
+        $this->shareManager->createModel($request);
 
-        Share::create($request->validated());
+        $contact = $this->shareManager->getContactById($request->contact_id);
+        $receiver = $this->shareManager->getReceiverById($request->user_id);
 
         return redirect()->route('shares.index')
-                         ->with('message', 'Success, You are sharing contact!');
+                         ->with('message', 'Success, You are sharing \'' . $contact->name . '\' contact with \'' . $receiver->name . '\'!');
     }
 
     /**
@@ -139,7 +116,12 @@ class ShareController extends Controller
         $creator_id = $share->sharedContact->creator_id;
         $contactName = $share->sharedContact->name;
 
-        $share->delete();
+        $isDeleted = $this->shareManager->deleteModel($share);
+
+        if(!$isDeleted) {
+            return redirect()->route('contacts.index')
+                ->withErrors('Something wrong!, try delete again!');
+        }
 
         if($creator_id != auth()->user()->id) {
             return redirect()->route('contacts.index')

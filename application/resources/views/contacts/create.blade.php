@@ -23,7 +23,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Creator</label>
-                                <input class="form-control" type="text" name="creator_id" value="{{ $creator_id }}">
+                                <input class="form-control" type="hidden" name="creator_id" value="{{ $creator_id }}">
                                 <small class="form-text text-muted">Please enter contact national identification number</small>
                             </div>
 

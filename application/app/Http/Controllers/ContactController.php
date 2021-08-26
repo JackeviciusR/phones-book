@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ContactRequest;
+use App\Managers\ContactManager;
 use App\Models\Contact;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ContactController extends Controller
 {
+    public function __construct(private ContactManager $contactManager) {
+
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -16,22 +21,13 @@ class ContactController extends Controller
      */
     public function index()
     {
-        if(!auth()->user()) {
-            return redirect()->route('login');
-        }
-
-        $contacts = Contact::query()->where('creator_id','=', auth()->user()->id)->get();
-
-        $receivedContacts = auth()->user()->receivedContacts()->get();
-
-        foreach ($receivedContacts as $receivedContact) {
-            $contacts->push($receivedContact);
-        }
+        $user = auth()->user();
+        $contacts = $this->contactManager->getUserAllContacts($user);
 
         $contacts = $contacts->sortBy('name');
 
         return view('contacts.index',[
-            'user_id'=>auth()->user()->id,
+            'user_id'=>$user->id,
             'contacts'=>$contacts,
             'count'=>$contacts->count(),
         ]);
@@ -44,7 +40,6 @@ class ContactController extends Controller
      */
     public function create()
     {
-//        dd(auth()->user()->id);
         return view('contacts.create',[
             'creator_id'=>auth()->user()->id,
         ]);
@@ -58,8 +53,7 @@ class ContactController extends Controller
      */
     public function store(ContactRequest $request)
     {
-//dd('hello');
-        Contact::create($request->validated());
+        $this->contactManager->createModel($request);
 
         return redirect()->route('contacts.index')
             ->with('message', 'Success, new records added to contact!');
@@ -73,19 +67,12 @@ class ContactController extends Controller
      */
     public function show(Contact $contact)
     {
-        $shares = $contact->contactShares()->get();
-        $receivers = $contact->receivers()
-            ->orderBy('name')
-            ->get();
-
-        $orderedShares = collect();
-        foreach ($receivers as $receiver) {
-            foreach ($shares as $share) {
-                if ($receiver->id == $share->user_id) {
-                    $orderedShares->push($share);
-                }
-            }
+        $contactById = $this->contactManager->getContactById($contact->id);
+        if (auth()->user()->id != $contactById->creator->id) {
+            return redirect()->back();
         }
+
+        $orderedShares = $this->contactManager->getOrderedContactSharesByReceivers($contact, 'name');
 
         return view('contacts.show', [
             'contact'=>$contact,
@@ -101,6 +88,11 @@ class ContactController extends Controller
      */
     public function edit(Contact $contact)
     {
+        $contactById = $this->contactManager->getContactById($contact->id);
+        if (auth()->user()->id != $contactById->creator->id) {
+            return redirect()->back();
+        }
+
         return view('contacts.edit', [
             'contact'=>$contact,
             'creator_id'=>$contact->creator_id,
@@ -116,7 +108,7 @@ class ContactController extends Controller
      */
     public function update(ContactRequest $request, Contact $contact)
     {
-        $contact->update($request->validated());
+        $this->contactManager->updateModel($request, $contact);
 
         return redirect()->route('contacts.index')
             ->with('message', 'Success, contacts record is updated!');
@@ -131,21 +123,10 @@ class ContactController extends Controller
     public function destroy(Contact $contact)
     {
         $contactName = $contact->name;
-        $shares = $contact->contactShares()->get();
 
-        DB::beginTransaction();
+        $isDeleted = $this->contactManager->deleteModel($contact);
 
-        try {
-//            foreach ($shares as $share) {
-//                $share->delete();
-//            }
-
-            $contact->delete();
-            DB::commit();
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
+        if(!$isDeleted) {
             return redirect()->route('contacts.index')
                 ->withErrors('Something wrong!, try delete again!');
         }
