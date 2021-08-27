@@ -29,10 +29,10 @@
                             </tr>
                             </thead>
                             <tbody id="myTable">
-                            @for($row = 0;$row < 1;)
+{{--                            @for($row = 0;$row < 1;)--}}
                                 @foreach ($contacts as $key=>$contact)
                                     <tr>
-                                        <th scope="row">{{++$row}}</th>
+                                        <th scope="row"></th>
                                         <td>{{$contact->name}}</td>
                                         <td>{{$contact->phone}}</td>
                                         <td scope="col" >
@@ -78,7 +78,7 @@
                                         </td>
                                     </tr>
                                 @endforeach
-                            @endfor
+{{--                            @endfor--}}
                             </tbody>
                         </table>
 

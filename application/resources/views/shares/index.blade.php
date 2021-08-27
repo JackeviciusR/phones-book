@@ -34,7 +34,7 @@
                             <tbody id="myTable">
                                 @foreach ($sharedData as $key=>$data)
                                     <tr>
-                                        <th scope="row">{{ $key }}</th>
+                                        <th scope="row">{{ $key+1 }}</th>
                                         <td>{{ $data->contact_name }}</td>
                                         <td>{{ $data->contact_phone }}</td>
                                         <td>{{ $data->receiver_name }}</td>

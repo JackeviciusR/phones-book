@@ -5,19 +5,20 @@
 ### Used:
 - GUI
 - Docker
-- Authetification
+- Authentication
 - Protected others users route parameters
 - CRUD
 - OOP
 - Dependency injection
 - Managers, Repositories
+- Tests
 
 #### Comming soon
 - Refractoring
 - Managers (more)
 - Repositories (more)
-- Unit test
-- Feature test
+- Unit test (more)
+- Feature test (more)
 - API
 
 ### Application running
