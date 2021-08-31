@@ -51,14 +51,25 @@ class ContactRepository extends AbstractRepository
 
     public function getUserAllContacts(User $user): Collection
     {
-        $receivedContacts = $user->receivedContacts()->get();
-        $createdContacts = $user->contacts()->get();
-
-        foreach ($receivedContacts as $receivedContact) {
-            $createdContacts->push($receivedContact);
-        }
-
-        return $createdContacts;
+        return Contact::query()
+            ->leftJoin('users', 'contacts.creator_id', '=', 'users.id')
+            ->Where('contacts.creator_id', '=', $user->id)
+            ->orWhereIn('contacts.id',
+                Contact::query()
+                    ->leftJoin('shares','contacts.id', '=', 'shares.contact_id')
+                    ->where('shares.user_id', '=', $user->id)
+                    ->select('contacts.id as id')
+                    ->get()
+            )
+            ->select(
+                'contacts.id as id',
+                'contacts.name as name',
+                'phone',
+                'creator_id',
+                'users.name as creator_name'
+            )
+            ->orderBy('contacts.name')
+            ->get();
     }
 
     public function updateModel(Request $request,Object $contact): void

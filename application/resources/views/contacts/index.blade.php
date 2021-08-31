@@ -32,7 +32,7 @@
 {{--                            @for($row = 0;$row < 1;)--}}
                                 @foreach ($contacts as $key=>$contact)
                                     <tr>
-                                        <th scope="row"></th>
+                                        <th scope="row">{{ $key + 1 }}</th>
                                         <td>{{$contact->name}}</td>
                                         <td>{{$contact->phone}}</td>
                                         <td scope="col" >

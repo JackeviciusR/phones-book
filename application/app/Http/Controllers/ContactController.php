@@ -24,8 +24,6 @@ class ContactController extends Controller
         $user = auth()->user();
         $contacts = $this->contactManager->getUserAllContacts($user);
 
-        $contacts = $contacts->sortBy('name');
-
         return view('contacts.index',[
             'user_id'=>$user->id,
             'contacts'=>$contacts,
