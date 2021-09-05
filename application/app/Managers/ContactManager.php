@@ -5,13 +5,12 @@ namespace App\Managers;
 
 use App\Models\Contact;
 use App\Models\User;
-use App\Repositories\AbstractRepository;
 use App\Repositories\ContactRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 
-class ContactManager extends AbstractRepository
+class ContactManager extends AbstractManager
 {
     public function __construct(protected ContactRepository $repository)
     {
