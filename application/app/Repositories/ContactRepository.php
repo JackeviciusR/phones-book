@@ -5,6 +5,7 @@ namespace App\Repositories;
 
 
 use App\Models\Contact;
+use App\Models\Share;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -31,22 +32,19 @@ class ContactRepository extends AbstractRepository
         return true;
     }
 
-    public function getOrderedContactSharesByReceivers(Contact $contact, string $columnName): Collection
+    public function getContactSharesByReceivers(int $contact_id): Collection
     {
-        $shares = $contact->contactShares()->get();
-        $receivers = $contact->receivers()
-            ->orderBy($columnName)
+        return User::query()
+            ->leftJoin('shares', 'users.id', '=', 'shares.user_id')
+            ->leftJoin('contacts', 'shares.contact_id', '=', 'contacts.id')
+            ->where('shares.contact_id', '=', $contact_id)
+            ->orderBy('users.name')
+            ->select(
+                'shares.id as share_id',
+                'shares.user_id as receiver_id',
+                'users.name as receiver_name',
+            )
             ->get();
-
-        $orderedShares = collect();
-        foreach ($receivers as $receiver) {
-            foreach ($shares as $share) {
-                if ($receiver->id == $share->user_id) {
-                    $orderedShares->push($share);
-                }
-            }
-        }
-        return $orderedShares;
     }
 
     public function getUserAllContacts(User $user): Collection

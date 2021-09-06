@@ -26,9 +26,9 @@ class ContactManager extends AbstractManager
         return $this->repository->deleteModel($contact);
     }
 
-    public function getOrderedContactSharesByReceivers(Contact $contact, string $columnName): Collection
+    public function getContactSharesByReceivers(int $contact_id): Collection
     {
-        return $this->repository->getOrderedContactSharesByReceivers($contact, $columnName);
+        return $this->repository->getContactSharesByReceivers($contact_id);
     }
 
     public function getUserAllContacts(User $user): Collection

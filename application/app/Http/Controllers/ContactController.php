@@ -70,7 +70,7 @@ class ContactController extends Controller
             return redirect()->back();
         }
 
-        $orderedShares = $this->contactManager->getOrderedContactSharesByReceivers($contact, 'name');
+        $orderedShares = $this->contactManager->getContactSharesByReceivers($contact->id);
 
         return view('contacts.show', [
             'contact'=>$contact,

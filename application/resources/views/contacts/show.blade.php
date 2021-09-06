@@ -21,10 +21,10 @@
                                 @foreach ($shares as $share)
                                     <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action list-group-item-light">
                                         <span>
-                                            {{ $share->sharedWith->name }}
+                                            {{ $share->receiver_name }}
                                         </span>
                                         <span class="badge badge-pill">
-                                            <form method="POST" action="{{ route('shares.destroy', [$share]) }}">
+                                            <form method="POST" action="{{ route('shares.destroy', [$share->share_id]) }}">
                                                 @method('DELETE')
                                                 @csrf
                                                 <button type="submit" class="btn btn-outline-success btn-sm">REMOVE</button>

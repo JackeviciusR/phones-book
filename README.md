@@ -12,6 +12,7 @@
 - Dependency injection
 - Managers, Repositories
 - Tests
+- Mocking
 
 #### Comming soon
 - Refractoring
